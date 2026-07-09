@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>供应商价格台账</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F3EEE2;
+    --paper-raised: #FBF8F0;
+    --ink: #22281F;
+    --ink-soft: #5B5F51;
+    --line: #D9D1BC;
+    --seal-red: #A6392B;
+    --seal-red-soft: #F3DED8;
+    --jade: #2F6F62;
+    --jade-soft: #DCEAE4;
+    --gold: #B8863B;
+    --shadow: 0 1px 0 rgba(34,40,31,0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(34,40,31,0.015) 0px, rgba(34,40,31,0.015) 1px, transparent 1px, transparent 32px);
+    color: var(--ink);
+    font-family: 'Noto Sans SC', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  /* ---------- Header ---------- */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 3px double var(--ink);
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header-title {
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 900;
+    font-size: 28px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .header-title small {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .header-meta {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    position: relative;
+  }
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px; height: 54px;
+    border: 2.5px solid var(--seal-red);
+    color: var(--seal-red);
+    border-radius: 6px;
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 900;
+    font-size: 13px;
+    line-height: 1.1;
+    text-align: center;
+    transform: rotate(-6deg);
+    opacity: 0.85;
+    margin-left: 10px;
+  }
+  .header-meta-row { display:flex; align-items:center; justify-content:flex-end; gap:4px; }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+  .btn {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 3px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper-raised);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: var(--ink); color: var(--paper-raised); }
+  .btn-red { background: var(--seal-red); border-color: var(--seal-red); color: #fff; }
+  .btn-ghost { border-color: var(--line); font-weight: 500; color: var(--ink-soft); }
+  .search {
+    margin-left: auto;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    padding: 9px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 3px;
+    background: var(--paper-raised);
+    min-width: 180px;
+  }
+  .search:focus { outline: none; border-color: var(--ink); }
+
+  /* ---------- Empty state ---------- */
+  .empty {
+    border: 1.5px dashed var(--line);
+    border-radius: 6px;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+  .empty-title { font-family: 'Noto Serif SC', serif; font-weight: 700; font-size: 18px; color: var(--ink); margin-bottom: 6px; }
+
+  /* ---------- Supplier card ---------- */
+  .supplier-card {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .supplier-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(34,40,31,0.02), transparent);
+  }
+  .supplier-name {
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .supplier-cat {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 2px 9px;
+  }
+  .supplier-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--ink-soft); font-size: 13px; font-family: 'Noto Sans SC';
+    padding: 4px 8px; border-radius: 3px;
+  }
+  .icon-btn:hover { background: var(--paper); color: var(--ink); }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 1.6fr 90px 110px 100px 90px 90px;
+    align-items: center;
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--line);
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.1s ease;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-row:hover { background: var(--paper); }
+  .item-row.stale { background: repeating-linear-gradient(135deg, rgba(184,134,59,0.06), rgba(184,134,59,0.06) 6px, transparent 6px, transparent 12px); }
+
+  .item-name { font-weight: 500; font-size: 14px; display:flex; flex-direction:column; }
+  .item-name .unit { font-size: 11px; color: var(--ink-soft); font-weight: 400; }
+  .item-price { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 15px; text-align: right; }
+  .item-change { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; text-align: right; }
+  .change-up { color: var(--seal-red); }
+  .change-down { color: var(--jade); }
+  .change-flat { color: var(--ink-soft); font-weight: 500; }
+  .item-date { font-size: 11px; color: var(--ink-soft); text-align: right; font-family: 'JetBrains Mono', monospace; }
+  .item-spark { display: flex; justify-content: flex-end; }
+
+  .col-head {
+    display: grid;
+    grid-template-columns: 1.6fr 90px 110px 100px 90px 90px;
+    padding: 0 18px 6px;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .col-head span:not(:first-child) { text-align: right; }
+
+  .empty-items { padding: 20px 18px; font-size: 13px; color: var(--ink-soft); }
+
+  /* ---------- Modal ---------- */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(34,40,31,0.45);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--paper-raised);
+    border-radius: 8px;
+    width: 100%; max-width: 480px;
+    max-height: 86vh; overflow-y: auto;
+    padding: 22px 24px 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    border: 1px solid var(--line);
+  }
+  .modal.wide { max-width: 640px; }
+  .modal-title {
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .modal-sub { font-size: 12px; color: var(--ink-soft); margin-bottom: 18px; }
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px; color: var(--ink-soft);
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1.5px solid var(--line);
+    border-radius: 4px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--ink); }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+  .modal-close { position: absolute; top: 16px; right: 18px; }
+
+  /* history table */
+  .hist-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 13px; }
+  .hist-table th {
+    text-align: left; font-size: 10.5px; text-transform: uppercase; color: var(--ink-soft);
+    border-bottom: 1.5px solid var(--ink); padding: 6px 4px; letter-spacing: 0.3px;
+  }
+  .hist-table td { padding: 7px 4px; border-bottom: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; }
+  .hist-table td.note { font-family: 'Noto Sans SC', sans-serif; color: var(--ink-soft); font-size: 12px; }
+  .hist-del { background: none; border: none; color: var(--seal-red); cursor: pointer; font-size: 12px; }
+  .chart-wrap { margin: 14px 0 6px; padding: 12px; background: var(--paper); border-radius: 6px; border: 1px solid var(--line); }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper-raised); padding: 10px 20px;
+    border-radius: 20px; font-size: 13px; font-weight: 500;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 200;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+  @media (max-width: 640px) {
+    .item-row, .col-head { grid-template-columns: 1.4fr 70px 90px; }
+    .item-spark, .col-head span:nth-child(5) { display: none; }
+    .item-date, .col-head span:nth-child(6) { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-title">
+      供应商价格台账
+      <small>TALKCRAB 匠蟹 · 蟹二少行情记录</small>
+    </div>
+    <div class="header-meta">
+      <div class="header-meta-row">
+        <span id="todayLabel"></span>
+        <span class="stamp">今日<br>行情</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="openSupplierModal()">+ 新增供应商</button>
+    <button class="btn" onclick="openItemModal()">+ 新增商品</button>
+    <button class="btn btn-red" onclick="openPriceModal()">📝 登记今日价格</button>
+    <input class="search" id="searchBox" placeholder="搜索商品 / 供应商..." oninput="render()">
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<!-- Supplier Modal -->
+<div class="overlay" id="supplierOverlay">
+  <div class="modal">
+    <button class="btn-ghost icon-btn modal-close" onclick="closeModal('supplierOverlay')">✕</button>
+    <div class="modal-title">新增供应商</div>
+    <div class="modal-sub">添加一个价格来源，例如海鲜档、蔬菜档、肉类供应商</div>
+    <div class="field">
+      <label>供应商名称</label>
+      <input id="supplierNameInput" placeholder="例如：新鲜海鲜行">
+    </div>
+    <div class="field">
+      <label>类别</label>
+      <input id="supplierCatInput" placeholder="例如：海鲜 / 蔬菜 / 肉类 / 干货">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('supplierOverlay')">取消</button>
+      <button class="btn btn-primary" onclick="saveSupplier()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Item Modal -->
+<div class="overlay" id="itemOverlay">
+  <div class="modal">
+    <button class="btn-ghost icon-btn modal-close" onclick="closeModal('itemOverlay')">✕</button>
+    <div class="modal-title">新增商品</div>
+    <div class="modal-sub">在某个供应商底下添加需要追踪价格的商品</div>
+    <div class="field">
+      <label>供应商</label>
+      <select id="itemSupplierSelect"></select>
+    </div>
+    <div class="field">
+      <label>商品名称</label>
+      <input id="itemNameInput" placeholder="例如：斯里兰卡活蟹">
+    </div>
+    <div class="field">
+      <label>计价单位</label>
+      <input id="itemUnitInput" placeholder="例如：每KG / 每箱 / 每只">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('itemOverlay')">取消</button>
+      <button class="btn btn-primary" onclick="saveItem()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Price Entry Modal -->
+<div class="overlay" id="priceOverlay">
+  <div class="modal">
+    <button class="btn-ghost icon-btn modal-close" onclick="closeModal('priceOverlay')">✕</button>
+    <div class="modal-title">登记价格</div>
+    <div class="modal-sub">记录某个商品在某天的价格</div>
+    <div class="field">
+      <label>供应商</label>
+      <select id="priceSupplierSelect" onchange="populatePriceItemSelect()"></select>
+    </div>
+    <div class="field">
+      <label>商品</label>
+      <select id="priceItemSelect"></select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>日期</label>
+        <input type="date" id="priceDateInput">
+      </div>
+      <div class="field">
+        <label>价格 (RM)</label>
+        <input type="number" step="0.01" id="priceValueInput" placeholder="0.00">
+      </div>
+    </div>
+    <div class="field">
+      <label>备注（可选）</label>
+      <input id="priceNoteInput" placeholder="例如：季节性缺货 / 促销价">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('priceOverlay')">取消</button>
+      <button class="btn btn-primary" onclick="savePrice()">保存价格</button>
+    </div>
+  </div>
+</div>
+
+<!-- Item Detail / History Modal -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal wide">
+    <button class="btn-ghost icon-btn modal-close" onclick="closeModal('detailOverlay')">✕</button>
+    <div class="modal-title" id="detailTitle"></div>
+    <div class="modal-sub" id="detailSub"></div>
+    <div class="chart-wrap" id="detailChart"></div>
+    <table class="hist-table">
+      <thead><tr><th>日期</th><th>价格 (RM)</th><th>较上次</th><th>备注</th><th></th></tr></thead>
+      <tbody id="detailHistBody"></tbody>
+    </table>
+    <div class="modal-actions">
+      <button class="btn btn-red" onclick="deleteCurrentItem()">删除此商品</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'crab-price-tracker-data';
+let state = { suppliers: [], items: [], prices: [] };
+let currentDetailItemId = null;
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function fmtDate(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' });
+}
+function money(n) { return 'RM ' + Number(n).toFixed(2); }
+
+async function loadState() {
+  try {
+    const res = await window.storage.get(STORAGE_KEY);
+    if (res && res.value) state = JSON.parse(res.value);
+  } catch (e) {
+    console.log('No existing data yet, starting fresh.');
+  }
+}
+async function saveState() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Storage error', e);
+    showToast('保存失败，请重试');
+  }
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+
+/* ---------- Supplier ---------- */
+function openSupplierModal() {
+  document.getElementById('supplierNameInput').value = '';
+  document.getElementById('supplierCatInput').value = '';
+  openModal('supplierOverlay');
+}
+async function saveSupplier() {
+  const name = document.getElementById('supplierNameInput').value.trim();
+  const cat = document.getElementById('supplierCatInput').value.trim();
+  if (!name) { showToast('请输入供应商名称'); return; }
+  state.suppliers.push({ id: uid(), name, category: cat || '未分类' });
+  await saveState();
+  closeModal('supplierOverlay');
+  showToast('供应商已添加');
+  render();
+}
+
+/* ---------- Item ---------- */
+function populateSupplierSelect(selectEl) {
+  selectEl.innerHTML = state.suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+}
+function openItemModal() {
+  if (state.suppliers.length === 0) { showToast('请先添加供应商'); return; }
+  populateSupplierSelect(document.getElementById('itemSupplierSelect'));
+  document.getElementById('itemNameInput').value = '';
+  document.getElementById('itemUnitInput').value = '';
+  openModal('itemOverlay');
+}
+async function saveItem() {
+  const supplierId = document.getElementById('itemSupplierSelect').value;
+  const name = document.getElementById('itemNameInput').value.trim();
+  const unit = document.getElementById('itemUnitInput').value.trim() || '每单位';
+  if (!name) { showToast('请输入商品名称'); return; }
+  state.items.push({ id: uid(), supplierId, name, unit });
+  await saveState();
+  closeModal('itemOverlay');
+  showToast('商品已添加');
+  render();
+}
+
+/* ---------- Price entry ---------- */
+function openPriceModal() {
+  if (state.suppliers.length === 0) { showToast('请先添加供应商和商品'); return; }
+  populateSupplierSelect(document.getElementById('priceSupplierSelect'));
+  populatePriceItemSelect();
+  document.getElementById('priceDateInput').value = todayStr();
+  document.getElementById('priceValueInput').value = '';
+  document.getElementById('priceNoteInput').value = '';
+  openModal('priceOverlay');
+}
+function populatePriceItemSelect() {
+  const supplierId = document.getElementById('priceSupplierSelect').value;
+  const itemsForSupplier = state.items.filter(i => i.supplierId === supplierId);
+  const sel = document.getElementById('priceItemSelect');
+  sel.innerHTML = itemsForSupplier.map(i => `<option value="${i.id}">${i.name} (${i.unit})</option>`).join('');
+  if (itemsForSupplier.length === 0) sel.innerHTML = '<option value="">（此供应商暂无商品）</option>';
+}
+async function savePrice() {
+  const itemId = document.getElementById('priceItemSelect').value;
+  const date = document.getElementById('priceDateInput').value;
+  const price = parseFloat(document.getElementById('priceValueInput').value);
+  const note = document.getElementById('priceNoteInput').value.trim();
+  if (!itemId) { showToast('请先为该供应商添加商品'); return; }
+  if (!date) { showToast('请选择日期'); return; }
+  if (isNaN(price) || price < 0) { showToast('请输入有效价格'); return; }
+  // remove existing entry for same item+date, then add fresh
+  state.prices = state.prices.filter(p => !(p.itemId === itemId && p.date === date));
+  state.prices.push({ id: uid(), itemId, date, price, note });
+  await saveState();
+  closeModal('priceOverlay');
+  showToast('价格已登记');
+  render();
+}
+
+/* ---------- Derived data ---------- */
+function pricesForItem(itemId) {
+  return state.prices.filter(p => p.itemId === itemId).sort((a,b) => a.date.localeCompare(b.date));
+}
+function latestTwo(itemId) {
+  const list = pricesForItem(itemId);
+  return { latest: list[list.length - 1], prev: list[list.length - 2], all: list };
+}
+function daysSince(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const now = new Date();
+  return Math.floor((now - d) / 86400000);
+}
+
+/* ---------- Sparkline SVG ---------- */
+function sparkline(list) {
+  if (list.length < 2) return '<span style="color:var(--ink-soft);font-size:11px;">—</span>';
+  const vals = list.map(p => p.price);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = max - min || 1;
+  const w = 72, h = 24, pad = 2;
+  const pts = vals.map((v, i) => {
+    const x = pad + (i / (vals.length - 1)) * (w - pad*2);
+    const y = h - pad - ((v - min) / range) * (h - pad*2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const up = vals[vals.length-1] >= vals[0];
+  const color = up ? 'var(--seal-red)' : 'var(--jade)';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+/* ---------- Main render ---------- */
+function render() {
+  document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  const content = document.getElementById('content');
+  const query = (document.getElementById('searchBox').value || '').trim().toLowerCase();
+
+  if (state.suppliers.length === 0) {
+    content.innerHTML = `<div class="empty">
+      <div class="empty-title">还没有供应商记录</div>
+      点击上方「+ 新增供应商」开始建立你的价格台账
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  let anyVisible = false;
+
+  state.suppliers.forEach(supplier => {
+    let items = state.items.filter(i => i.supplierId === supplier.id);
+    if (query) {
+      const supplierMatches = supplier.name.toLowerCase().includes(query);
+      if (!supplierMatches) items = items.filter(i => i.name.toLowerCase().includes(query));
+      if (!supplierMatches && items.length === 0) return;
+    }
+    anyVisible = true;
+
+    let rows = '';
+    if (items.length === 0) {
+      rows = `<div class="empty-items">此供应商暂无商品，点击「+ 新增商品」添加</div>`;
+    } else {
+      rows = items.map(item => {
+        const { latest, prev, all } = latestTwo(item.id);
+        const stale = latest && daysSince(latest.date) > 3;
+        let priceHtml = '<span style="color:var(--ink-soft);font-size:13px;">未登记</span>';
+        let changeHtml = '<span class="item-change change-flat">—</span>';
+        let dateHtml = '—';
+        if (latest) {
+          priceHtml = money(latest.price);
+          dateHtml = fmtDate(latest.date);
+          if (prev && prev.price !== 0) {
+            const diff = latest.price - prev.price;
+            const pct = (diff / prev.price * 100);
+            if (Math.abs(diff) < 0.001) {
+              changeHtml = `<span class="item-change change-flat">持平</span>`;
+            } else if (diff > 0) {
+              changeHtml = `<span class="item-change change-up">▲ ${pct.toFixed(1)}%</span>`;
+            } else {
+              changeHtml = `<span class="item-change change-down">▼ ${Math.abs(pct).toFixed(1)}%</span>`;
+            }
+          }
+        }
+        return `<div class="item-row ${stale ? 'stale' : ''}" onclick="openDetail('${item.id}')">
+          <div class="item-name">${item.name}<span class="unit">${item.unit}${stale ? ' · 已' + daysSince(latest.date) + '天未更新' : ''}</span></div>
+          <div class="item-price">${priceHtml}</div>
+          <div class="item-change">${changeHtml}</div>
+          <div></div>
+          <div class="item-spark">${sparkline(all)}</div>
+          <div class="item-date">${dateHtml}</div>
+        </div>`;
+      }).join('');
+    }
+
+    html += `<div class="supplier-card">
+      <div class="supplier-head">
+        <div class="supplier-name">${supplier.name} <span class="supplier-cat">${supplier.category}</span></div>
+        <div class="supplier-actions">
+          <button class="icon-btn" onclick="event.stopPropagation(); deleteSupplier('${supplier.id}')">删除供应商</button>
+        </div>
+      </div>
+      ${items.length > 0 ? `<div class="col-head"><span>商品</span><span>现价</span><span>较上次</span><span></span><span>趋势</span><span>更新日期</span></div>` : ''}
+      ${rows}
+    </div>`;
+  });
+
+  content.innerHTML = anyVisible ? html : `<div class="empty"><div class="empty-title">没有找到匹配结果</div>试试其他关键词</div>`;
+}
+
+/* ---------- Delete ---------- */
+async function deleteSupplier(id) {
+  if (!confirm('删除该供应商将同时删除其所有商品与价格记录，确定继续？')) return;
+  const itemIds = state.items.filter(i => i.supplierId === id).map(i => i.id);
+  state.items = state.items.filter(i => i.supplierId !== id);
+  state.prices = state.prices.filter(p => !itemIds.includes(p.itemId));
+  state.suppliers = state.suppliers.filter(s => s.id !== id);
+  await saveState();
+  showToast('供应商已删除');
+  render();
+}
+async function deleteCurrentItem() {
+  if (!currentDetailItemId) return;
+  if (!confirm('删除该商品将同时删除其所有价格记录，确定继续？')) return;
+  state.prices = state.prices.filter(p => p.itemId !== currentDetailItemId);
+  state.items = state.items.filter(i => i.id !== currentDetailItemId);
+  await saveState();
+  closeModal('detailOverlay');
+  showToast('商品已删除');
+  render();
+}
+
+/* ---------- Detail modal ---------- */
+function openDetail(itemId) {
+  currentDetailItemId = itemId;
+  const item = state.items.find(i => i.id === itemId);
+  const supplier = state.suppliers.find(s => s.id === item.supplierId);
+  const list = pricesForItem(itemId);
+  document.getElementById('detailTitle').textContent = item.name;
+  document.getElementById('detailSub').textContent = `${supplier ? supplier.name : ''} · ${item.unit}`;
+
+  // chart
+  document.getElementById('detailChart').innerHTML = buildChart(list);
+
+  // history table
+  const body = document.getElementById('detailHistBody');
+  if (list.length === 0) {
+    body.innerHTML = `<tr><td colspan="5" style="font-family:'Noto Sans SC';color:var(--ink-soft);">暂无价格记录</td></tr>`;
+  } else {
+    const rev = [...list].reverse();
+    body.innerHTML = rev.map((p, idx) => {
+      const realIdx = list.length - 1 - idx;
+      const prev = list[realIdx - 1];
+      let changeCell = '—';
+      if (prev) {
+        const diff = p.price - prev.price;
+        const pct = prev.price !== 0 ? (diff/prev.price*100) : 0;
+        if (Math.abs(diff) < 0.001) changeCell = `<span class="change-flat">持平</span>`;
+        else if (diff > 0) changeCell = `<span class="change-up">▲ ${pct.toFixed(1)}%</span>`;
+        else changeCell = `<span class="change-down">▼ ${Math.abs(pct).toFixed(1)}%</span>`;
+      }
+      return `<tr>
+        <td>${fmtDate(p.date)}</td>
+        <td>${money(p.price)}</td>
+        <td>${changeCell}</td>
+        <td class="note">${p.note || ''}</td>
+        <td><button class="hist-del" onclick="deletePriceEntry('${p.id}')">删除</button></td>
+      </tr>`;
+    }).join('');
+  }
+  openModal('detailOverlay');
+}
+async function deletePriceEntry(priceId) {
+  state.prices = state.prices.filter(p => p.id !== priceId);
+  await saveState();
+  openDetail(currentDetailItemId);
+  render();
+}
+
+function buildChart(list) {
+  if (list.length < 2) {
+    return `<div style="font-size:12px;color:var(--ink-soft);text-align:center;padding:20px 0;">至少需要两笔价格记录才能显示趋势图</div>`;
+  }
+  const w = 560, h = 160, padL = 44, padR = 12, padT = 12, padB = 24;
+  const vals = list.map(p => p.price);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = (max - min) || 1;
+  const innerW = w - padL - padR, innerH = h - padT - padB;
+  const pts = list.map((p, i) => {
+    const x = padL + (i / (list.length - 1)) * innerW;
+    const y = padT + innerH - ((p.price - min) / range) * innerH;
+    return { x, y, p };
+  });
+  const linePts = pts.map(pt => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
+  const dots = pts.map(pt => `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="3" fill="var(--seal-red)"><title>${fmtDate(pt.p.date)}: ${money(pt.p.price)}</title></circle>`).join('');
+  const xLabels = pts.filter((_, i) => i === 0 || i === pts.length - 1 || i === Math.floor(pts.length/2))
+    .map(pt => `<text x="${pt.x}" y="${h - 6}" font-size="10" fill="var(--ink-soft)" text-anchor="middle" font-family="JetBrains Mono">${fmtDate(pt.p.date)}</text>`).join('');
+  const maxLabel = `<text x="${padL - 6}" y="${padT + 4}" font-size="10" fill="var(--ink-soft)" text-anchor="end" font-family="JetBrains Mono">${max.toFixed(2)}</text>`;
+  const minLabel = `<text x="${padL - 6}" y="${padT + innerH}" font-size="10" fill="var(--ink-soft)" text-anchor="end" font-family="JetBrains Mono">${min.toFixed(2)}</text>`;
+  return `<svg width="100%" viewBox="0 0 ${w} ${h}" style="display:block;">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="var(--line)" stroke-width="1"/>
+    <line x1="${padL}" y1="${padT+innerH}" x2="${w-padR}" y2="${padT+innerH}" stroke="var(--line)" stroke-width="1"/>
+    ${maxLabel}${minLabel}
+    <polyline points="${linePts}" fill="none" stroke="var(--seal-red)" stroke-width="2"/>
+    ${dots}
+    ${xLabels}
+  </svg>`;
+}
+
+/* ---------- Init ---------- */
+(async function init() {
+  await loadState();
+  render();
+})();
+</script>
+</body>
+</html>
